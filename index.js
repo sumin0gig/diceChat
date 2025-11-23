@@ -89,7 +89,7 @@ client.on('interactionCreate', async (interaction) => {
     
     const result = `${rollsDisplay}${modifierText}\n\n **${total}**`;
 
-    await interaction.reply(`🎲 ${diceInput}\n\n${result}`);
+    await interaction.reply(`🎲 얌이는 1이지`);
   }
 });
 
