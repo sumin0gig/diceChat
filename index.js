@@ -57,8 +57,8 @@ client.on('interactionCreate', async (interaction) => {
   if (interaction.commandName === 'roll') {
     const diceInput = interaction.options.getString('dice'); // 예: "2d6+3"
 
-    // 🎯 1d6, 2d10+3, 3d4-2 모두 매칭
-    const match = diceInput.match(/^(\d+)d(\d+)([+-]\d+)?$/i);
+    // 🎯 1d6, 2d10+3, 3d4-2, 1d2*3+1 모두 매칭
+    const match = diceInput.match(/^(\d+)d(\d+)(\*(\d+))?([+-]\d+)?$/i);
     if (!match) {
       await interaction.reply('⚠️ 올바른 형식으로 입력해주세요! 예: `/roll 2d6+3` 또는 `/roll 1d20`');
       return;
@@ -66,21 +66,30 @@ client.on('interactionCreate', async (interaction) => {
 
     const count = parseInt(match[1]);
     const sides = parseInt(match[2]);
-    const modifier = match[3] ? parseInt(match[3]) : 0;
+    const multiplyCount = match[4] ? parseInt(match[4]) : 1;
+    const modifier = match[5] ? parseInt(match[5]) : 0;
 
-    if (count <= 0 || sides <= 0) {
-      await interaction.reply('⚠️ 주사위 수와 면의 수는 1 이상이어야 해요!');
+    if (count <= 0 || sides <= 0 || multiplyCount <= 0) {
+      await interaction.reply('⚠️ 주사위 수, 면의 수, 곱셈 수는 1 이상이어야 해요!');
       return;
     }
 
-    // 주사위 굴리기
-    const rolls = Array.from({ length: count }, () => Math.floor(Math.random() * sides) + 1);
+    // 주사위 굴리기 (* 연산이 있으면 count * multiplyCount번 굴림)
+    const totalDiceCount = count * multiplyCount;
+    const rolls = Array.from({ length: totalDiceCount }, () => Math.floor(Math.random() * sides) + 1);
     const sum = rolls.reduce((a, b) => a + b, 0);
     const total = sum + modifier;
 
-    const modifierText = modifier === 0 ? '' : (modifier > 0 ? ` + ${modifier}` : ` - ${Math.abs(modifier)}`);
+    // 결과 포맷팅
+    const rollsDisplay = `[${rolls.join(' + ')}]`;
+    let modifierText = '';
+    if (modifier !== 0) {
+      modifierText = modifier > 0 ? ` +${modifier}` : ` ${modifier}`;
+    }
+    
+    const result = `${rollsDisplay}${modifierText}\n\n **${total}**`;
 
-    await interaction.reply(`🎲 **${diceInput}** → 🎯 결과: ${rolls.join(', ')}${modifierText} = **${total}**`);
+    await interaction.reply(`🎲 ${diceInput}\n\n${result}`);
   }
 });
 
